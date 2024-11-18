@@ -1,0 +1,10 @@
+# Dependencies for geolocation utility project
+
+# HTTP library used for making API requests to the OpenWeather API
+requests
+
+# Testing framework used to write and run unit and integration tests
+pytest
+
+# Mocking library used to simulate API responses during testing
+responses
