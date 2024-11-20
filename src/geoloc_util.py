@@ -1,5 +1,9 @@
 import argparse  # Library for parsing command-line arguments
-from api_client import fetch_coordinates_by_name, fetch_coordinates_by_zip  # Functions to fetch geolocation data
+from api_client import (
+    fetch_coordinates_by_name,
+    fetch_coordinates_by_zip,
+)  # Functions to fetch geolocation data
+
 
 def main():
     """
@@ -20,13 +24,13 @@ def main():
     """
     # Create a parser for command-line arguments
     parser = argparse.ArgumentParser(description="Geolocation Utility")
-    
+
     # Define an argument for a list of locations
     parser.add_argument(
-        '--locations', 
-        nargs='+', 
-        required=True, 
-        help='List of locations (City, State or ZipCode)'
+        "--locations",
+        nargs="+",
+        required=True,
+        help="List of locations (City, State or ZipCode)",
     )
 
     # Parse the command-line arguments
@@ -34,13 +38,20 @@ def main():
 
     # Loop through the provided locations and determine how to fetch their data
     for location in args.locations:
-        if location.isdigit():  # Check if the input is a ZIP code (contains only digits)
-            data = fetch_coordinates_by_zip(location)  # Fetch data using the ZIP code API
+        if (
+            location.isdigit()
+        ):  # Check if the input is a ZIP code (contains only digits)
+            data = fetch_coordinates_by_zip(
+                location
+            )  # Fetch data using the ZIP code API
         else:  # Otherwise, treat the input as a city/state combination
-            data = fetch_coordinates_by_name(location)  # Fetch data using the city/state API
-        
+            data = fetch_coordinates_by_name(
+                location
+            )  # Fetch data using the city/state API
+
         # Print the results for the current location
         print(f"Location: {location}, Data: {data}")
+
 
 if __name__ == "__main__":
     """

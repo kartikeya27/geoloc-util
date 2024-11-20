@@ -1,9 +1,14 @@
+import os
 import requests  # HTTP library for making API requests
-from utils import validate_location_input, encode_location  # Utility functions for validation and encoding
+from utils import (
+    validate_location_input,
+    encode_location,
+)  # Utility functions for validation and encoding
 
-# API Key and Base URL for the OpenWeather Geocoding API
-API_KEY = "f897a99d971b5eef57be6fafa0d83239"  # Replace with your actual API key if needed
+# Retrieve API Key and Base URL from environment variables
+API_KEY = os.getenv("OPENWEATHER_API_KEY")  # Set this in your environment
 BASE_URL = "http://api.openweathermap.org/geo/1.0/"
+
 
 def fetch_coordinates_by_name(location):
     """
@@ -30,24 +35,24 @@ def fetch_coordinates_by_name(location):
 
     # Make a GET request to the OpenWeather API for geolocation data
     response = requests.get(
-        f"{BASE_URL}direct", 
-        params={"q": encoded_location, "appid": API_KEY}
+        f"{BASE_URL}direct", params={"q": encoded_location, "appid": API_KEY}
     )
-    
+
     # Debugging: Print the API response for the given location
     print(f"API Response for {location}: {response.json()}")
 
     # Check for HTTP errors and raise exceptions if necessary
     response.raise_for_status()
-    
+
     # Parse the JSON response
     data = response.json()
-    
+
     # Handle cases where no data is returned
     if not data:
         return [{"error": f"No results found for location: {location}"}]
-    
+
     return data
+
 
 def fetch_coordinates_by_zip(zip_code):
     """
@@ -73,13 +78,12 @@ def fetch_coordinates_by_zip(zip_code):
 
     # Make a GET request to the OpenWeather API for ZIP code data
     response = requests.get(
-        f"{BASE_URL}zip", 
-        params={"zip": zip_code, "appid": API_KEY}
+        f"{BASE_URL}zip", params={"zip": zip_code, "appid": API_KEY}
     )
 
     # Check for HTTP errors and raise exceptions if necessary
     response.raise_for_status()
-    
+
     # Parse the JSON response
     data = response.json()
 

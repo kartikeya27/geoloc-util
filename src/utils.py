@@ -1,6 +1,7 @@
 import re  # Module for regular expression operations
 from urllib.parse import quote  # Module for URL encoding
 
+
 def validate_location_input(location):
     """
     Validates the input location string to ensure it meets the required format.
@@ -19,10 +20,15 @@ def validate_location_input(location):
     - The location can only contain letters, numbers, spaces, commas, periods, and hyphens.
     """
     if not location.strip():
-        raise ValueError("Location input cannot be empty.")  # Raise error if input is empty
-    if not re.match(r'^[\w\s,.-]+$', location, re.UNICODE):
-        raise ValueError("Location contains invalid characters.")  # Raise error for invalid characters
+        raise ValueError(
+            "Location input cannot be empty."
+        )  # Raise error if input is empty
+    if not re.match(r"^[\w\s,.-]+$", location, re.UNICODE):
+        raise ValueError(
+            "Location contains invalid characters."
+        )  # Raise error for invalid characters
     return location  # Return the validated location
+
 
 def encode_location(location):
     """
