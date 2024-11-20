@@ -20,26 +20,17 @@ def fetch_coordinates_by_name(location):
     Returns:
         list[dict]: A list of location data dictionaries containing latitude, longitude, and other metadata.
                     If no results are found, returns a dictionary with an error message.
-
-    Example:
-        Input: "Madison, WI"
-        Output: [{'lat': 43.073051, 'lon': -89.40123, 'name': 'Madison', 'country': 'US'}]
-
-    Raises:
-        ValueError: If the location string is invalid or improperly formatted.
-        HTTPError: If the API request fails (e.g., network issues, invalid API key).
     """
     # Validate and encode the input location
     location = validate_location_input(location)
     encoded_location = encode_location(location)
 
-    # Make a GET request to the OpenWeather API for geolocation data
+    # Make a GET request to the OpenWeather API for geolocation data with a timeout
     response = requests.get(
-        f"{BASE_URL}direct", params={"q": encoded_location, "appid": API_KEY}
+        f"{BASE_URL}direct",
+        params={"q": encoded_location, "appid": API_KEY},
+        timeout=10  # Adding a timeout of 10 seconds
     )
-
-    # Debugging: Print the API response for the given location
-    print(f"API Response for {location}: {response.json()}")
 
     # Check for HTTP errors and raise exceptions if necessary
     response.raise_for_status()
@@ -52,6 +43,7 @@ def fetch_coordinates_by_name(location):
         return [{"error": f"No results found for location: {location}"}]
 
     return data
+
 
 
 def fetch_coordinates_by_zip(zip_code):
