@@ -1,39 +1,52 @@
 import os
-import requests  # HTTP library for making API requests
-from utils import (
-    validate_location_input,
-    encode_location,
-)  # Utility functions for validation and encoding
+import requests
+from utils import validate_location_input, encode_location
 
 # Retrieve API Key and Base URL from environment variables
-API_KEY = os.getenv("OPENWEATHER_API_KEY")  # Set this in your environment
+API_KEY = os.getenv("OPENWEATHER_API_KEY")  # Ensure this is set in your environment
 BASE_URL = "http://api.openweathermap.org/geo/1.0/"
-
+TIMEOUT = 10  # Timeout duration in seconds
 
 def fetch_coordinates_by_name(location):
     """
-    Fetches geolocation coordinates (latitude and longitude) by city and state name.
+    Fetch geolocation coordinates (latitude and longitude) by city and state name.
 
     Args:
         location (str): The city and state in the format "City, State" (e.g., "Madison, WI").
 
     Returns:
-        list[dict]: A list of location data dictionaries containing latitude, longitude, and other metadata.
-                    If no results are found, returns a dictionary with an error message.
+        list[dict]: A list of dictionaries containing latitude, longitude, and other location details.
+                    If no results are found, returns a list with an error dictionary.
+
+    Raises:
+        ValueError: If the location string is invalid or improperly formatted.
+        RuntimeError: If the API request fails due to network issues or invalid API key.
+        TimeoutError: If the API request times out.
     """
     # Validate and encode the input location
-    location = validate_location_input(location)
-    encoded_location = encode_location(location)
+    try:
+        location = validate_location_input(location)
+        encoded_location = encode_location(location)
+    except ValueError as ve:
+        raise ValueError(f"Invalid location input: {ve}") from None
 
-    # Make a GET request to the OpenWeather API for geolocation data with a timeout
-    response = requests.get(
-        f"{BASE_URL}direct",
-        params={"q": encoded_location, "appid": API_KEY},
-        timeout=10  # Adding a timeout of 10 seconds
-    )
-
-    # Check for HTTP errors and raise exceptions if necessary
-    response.raise_for_status()
+    try:
+        # Make a GET request to the OpenWeather API for geolocation data with a timeout
+        response = requests.get(
+            f"{BASE_URL}direct",
+            params={"q": encoded_location, "appid": API_KEY},
+            timeout=TIMEOUT
+        )
+        response.raise_for_status()  # Raise an error for HTTP status codes >= 400
+    except requests.exceptions.Timeout:
+        raise TimeoutError("The request timed out. Please try again later.") from None
+    except requests.exceptions.HTTPError as http_err:
+        if response.status_code == 401:
+            raise RuntimeError("Unauthorized access: Check your API key.") from None
+        else:
+            raise RuntimeError(f"HTTP error occurred: {http_err}") from None
+    except requests.exceptions.RequestException as req_err:
+        raise RuntimeError(f"An error occurred during the request: {req_err}") from None
 
     # Parse the JSON response
     data = response.json()
@@ -44,43 +57,47 @@ def fetch_coordinates_by_name(location):
 
     return data
 
-
-
 def fetch_coordinates_by_zip(zip_code):
     """
-    Fetches geolocation coordinates (latitude and longitude) by ZIP code.
+    Fetch geolocation coordinates (latitude and longitude) by ZIP code.
 
     Args:
         zip_code (str): The ZIP code as a string (e.g., "53703").
 
     Returns:
-        dict: A dictionary containing latitude, longitude, and other metadata for the ZIP code.
-            If no results are found, raises a ValueError.
-
-    Example:
-        Input: "53703"
-        Output: {'lat': 43.073051, 'lon': -89.40123, 'name': 'Madison', 'state': 'WI', 'country': 'US'}
+        dict: A dictionary containing latitude, longitude, and other location details.
+            If no results are found, returns a dictionary with an error message.
 
     Raises:
         ValueError: If the ZIP code is invalid or improperly formatted.
-        HTTPError: If the API request fails (e.g., network issues, invalid API key).
+        RuntimeError: If the API request fails due to network issues or invalid API key.
+        TimeoutError: If the API request times out.
     """
     # Validate the input ZIP code
-    zip_code = validate_location_input(zip_code)
+    if not zip_code.isdigit() or len(zip_code) != 5:
+        raise ValueError("Invalid ZIP code. ZIP code must be a 5-digit number.")
 
-    # Make a GET request to the OpenWeather API for ZIP code data
-    response = requests.get(
-        f"{BASE_URL}zip", params={"zip": zip_code, "appid": API_KEY}
-    )
-
-    # Check for HTTP errors and raise exceptions if necessary
-    response.raise_for_status()
+    try:
+        # Make a GET request to the OpenWeather API for ZIP code data with a timeout
+        response = requests.get(
+            f"{BASE_URL}zip",
+            params={"zip": zip_code, "appid": API_KEY},
+            timeout=TIMEOUT
+        )
+        response.raise_for_status()  # Raise an error for HTTP status codes >= 400
+    except requests.exceptions.Timeout:
+        raise TimeoutError("The request timed out. Please try again later.") from None
+    except requests.exceptions.HTTPError as http_err:
+        if response.status_code == 404:
+            return {"error": f"No results found for ZIP code: {zip_code}"}
+        elif response.status_code == 401:
+            raise RuntimeError("Unauthorized access: Check your API key.") from None
+        else:
+            raise RuntimeError(f"HTTP error occurred: {http_err}") from None
+    except requests.exceptions.RequestException as req_err:
+        raise RuntimeError(f"An error occurred during the request: {req_err}") from None
 
     # Parse the JSON response
     data = response.json()
-
-    # Handle cases where no data is returned
-    if not data:
-        raise ValueError(f"No results found for ZIP code: {zip_code}")
 
     return data
